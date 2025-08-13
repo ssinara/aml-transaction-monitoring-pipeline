@@ -4,6 +4,10 @@ from pyspark.sql import SparkSession
 import pandas as pd
 from pyspark.sql.types import StructType, StringType, DoubleType, IntegerType, TimestampType, StructField
 from pyspark.sql.functions import *
+from common.logging_config import get_logger
+
+logger = get_logger("ingestion")
+
 
 
 def get_first_friday():
@@ -55,12 +59,15 @@ def load_data():
 
     df_accounts = df_accounts.withColumn('prcsng_dt', lit(get_first_friday()).cast('date'))
     df_transactions = df_transactions.withColumn('prcsng_dt', lit(get_first_friday()).cast('date'))
+    logger.info(f"Added prcsng_dt {get_first_friday()}")
 
     df_accounts.write.mode("overwrite").partitionBy('prcsng_dt').parquet('data/processed/accounts')
     df_transactions.write.mode("overwrite").partitionBy('prcsng_dt').parquet('data/processed/transaction')
-        
+    logger.info("processed data is created")
+
     spark.stop()
 
 if __name__ =='__main__':
+    logger.info("Starting ingestion job...")
     load_data()
     
